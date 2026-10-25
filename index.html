@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>日语单词学习</title>
+<style>
+:root{--bg:#faf7f2;--card:#fff;--ink:#2b2622;--mute:#7a7068;--line:#e8e0d5;--acc:#c8433a;--acc2:#fbe9e7;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1a18;--card:#262321;--ink:#f1ebe4;--mute:#a1978d;--line:#3a3531;--acc:#ef6b61;--acc2:#3a2523;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1c1a18;--card:#262321;--ink:#f1ebe4;--mute:#a1978d;--line:#3a3531;--acc:#ef6b61;--acc2:#3a2523;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Hiragino Sans","Noto Sans JP","PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:8px 0 2px}h1 span{color:var(--acc)}
+.sub{color:var(--mute);margin:0 0 18px;font-size:14px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:15px;cursor:pointer}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.row{display:flex;gap:8px}
+input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:17px}
+input:focus{outline:2px solid var(--acc);outline-offset:0}
+button.go{padding:0 18px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:15px;cursor:pointer}
+button.go:disabled{opacity:.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+.big{font-size:34px;line-height:1.2;font-weight:600}
+.rd{color:var(--mute);margin-top:2px}
+.zh{font-size:19px;margin:10px 0 2px}
+.pos{display:inline-block;font-size:12px;background:var(--acc2);color:var(--acc);padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:middle}
+h3{font-size:14px;color:var(--mute);margin:16px 0 6px;font-weight:600}
+.ex{padding:10px 12px;border-left:3px solid var(--acc);background:var(--acc2);border-radius:0 8px 8px 0;margin-bottom:8px}
+.ex .j{font-size:17px}.ex .k{font-size:13px;color:var(--mute)}.ex .c{font-size:14px;margin-top:2px}
+.save{margin-top:14px;padding:9px 16px;border:1px solid var(--acc);color:var(--acc);background:transparent;border-radius:10px;cursor:pointer;font-size:14px}
+.save:disabled{opacity:.5;cursor:default}
+.msg{color:var(--mute);text-align:center;padding:24px 0}
+.err{color:var(--acc)}
+.wrap{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--mute);background:var(--acc2);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.w{font-size:18px;font-weight:600}td.r{font-size:14px}td.r small{color:var(--mute);display:block}
+td.x{width:34px;text-align:center}
+.del{border:0;background:none;color:var(--mute);cursor:pointer;font-size:16px}
+.del:hover{color:var(--acc)}
+.add{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-top:14px}
+.add input{font-size:15px;padding:10px 12px}
+@media(max-width:560px){.add{grid-template-columns:1fr}.add button{padding:10px}}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>日语<span>単語</span>学习</h1>
+<p class="sub">输入单词，获得翻译、解释和例句；喜欢的一键加入单词表。</p>
+<div class="tabs">
+  <button class="tab on" data-t="look">查单词</button>
+  <button class="tab" data-t="list">单词表 <span id="cnt">(0)</span></button>
+  <button class="tab" data-t="set" style="flex:.5">设置</button>
+</div>
+
+<section id="look">
+  <div class="row">
+    <input id="q" placeholder="输入日语单词，例如：食べる" autocomplete="off" enterkeyhint="search">
+    <button class="go" id="go">查询</button>
+  </div>
+  <div id="out"></div>
+</section>
+
+<section id="list" class="hidden">
+  <div class="wrap"><table>
+    <thead><tr><th>日语词汇</th><th>罗马字 / 平假名</th><th>中文意思</th><th></th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+  <div id="empty" class="msg">还没有单词，去“查单词”里添加吧。</div>
+  <div class="add">
+    <input id="aw" placeholder="日语词汇">
+    <input id="ar" placeholder="罗马字 / 平假名">
+    <input id="az" placeholder="中文意思">
+    <button class="go" id="ab">手动添加</button>
+  </div>
+</section>
+<section id="set" class="hidden">
+  <div class="card" style="margin-top:0">
+    <h3 style="margin-top:0">Anthropic API Key</h3>
+    <div class="sub">查询功能需要你自己的 API Key（在 console.anthropic.com 获取）。Key 只保存在这台设备的浏览器里，只会发送给 Anthropic。</div>
+    <div class="row"><input id="key" type="password" placeholder="sk-ant-..." autocomplete="off"><button class="go" id="ks">保存</button></div>
+    <div id="kmsg" class="sub" style="margin:8px 0 0"></div>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+var KEY="jp-vocab-v1", AK="jp-vocab-apikey", words=[], cur=null, apiKey="";
+var $=function(i){return document.getElementById(i)};
+function load(){try{words=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){words=[]}}
+function store(){try{localStorage.setItem(KEY,JSON.stringify(words))}catch(e){}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function renderList(){
+  $("cnt").textContent="("+words.length+")";
+  $("empty").classList.toggle("hidden",words.length>0);
+  $("tb").innerHTML=words.map(function(w,i){
+    return '<tr><td class="w">'+esc(w.word)+'</td><td class="r">'+esc(w.reading)+'</td><td>'+esc(w.zh)+'</td><td class="x"><button class="del" data-i="'+i+'" title="删除">✕</button></td></tr>';
+  }).join("");
+}
+function addWord(w){
+  if(words.some(function(x){return x.word===w.word}))return false;
+  words.unshift(w);store();renderList();return true;
+}
+$("tb").addEventListener("click",function(e){
+  var b=e.target.closest(".del");if(!b)return;
+  words.splice(+b.dataset.i,1);store();renderList();
+});
+$("ab").onclick=function(){
+  var w=$("aw").value.trim(),r=$("ar").value.trim(),z=$("az").value.trim();
+  if(!w||!z)return;
+  if(addWord({word:w,reading:r,zh:z})){$("aw").value=$("ar").value=$("az").value=""}
+};
+
+document.querySelectorAll(".tab").forEach(function(t){
+  t.onclick=function(){
+    document.querySelectorAll(".tab").forEach(function(x){x.classList.toggle("on",x===t)});
+    $("look").classList.toggle("hidden",t.dataset.t!=="look");
+    $("list").classList.toggle("hidden",t.dataset.t!=="list");
+    $("set").classList.toggle("hidden",t.dataset.t!=="set");
+  };
+});
+
+function show(d){
+  cur={word:d.word,reading:(d.romaji||"")+(d.kana?" / "+d.kana:""),zh:d.zh};
+  var ex=(d.examples||[]).map(function(e){
+    return '<div class="ex"><div class="j">'+esc(e.ja)+'</div><div class="k">'+esc(e.kana)+'</div><div class="c">'+esc(e.zh)+'</div></div>';
+  }).join("");
+  var saved=words.some(function(x){return x.word===cur.word});
+  $("out").innerHTML='<div class="card"><div class="big">'+esc(d.word)+'</div>'
+    +'<div class="rd">'+esc(d.kana)+' · '+esc(d.romaji)+'</div>'
+    +'<div class="zh">'+esc(d.zh)+(d.pos?'<span class="pos">'+esc(d.pos)+'</span>':'')+'</div>'
+    +'<h3>解释</h3><div>'+esc(d.explain)+'</div>'
+    +'<h3>例句</h3>'+ex
+    +(d.tip?'<h3>小提示</h3><div>'+esc(d.tip)+'</div>':'')
+    +'<button class="save" id="sv"'+(saved?' disabled':'')+'>'+(saved?'已在单词表':'＋ 加入单词表')+'</button></div>';
+  $("sv").onclick=function(){if(addWord(cur)){this.disabled=true;this.textContent="已在单词表"}};
+}
+
+function parse(t){
+  t=t.replace(/```json|```/g,"").trim();
+  var a=t.indexOf("{"),b=t.lastIndexOf("}");
+  return JSON.parse(t.slice(a,b+1));
+}
+
+async function lookup(){
+  var q=$("q").value.trim();if(!q)return;
+  if(!apiKey){$("out").innerHTML='<div class="msg err">请先到“设置”里填入 API Key。</div>';return}
+  $("go").disabled=true;
+  $("out").innerHTML='<div class="msg">查询中…</div>';
+  var prompt='你是日语老师，学生是中文母语者。请解释这个词："'+q+'"（如果输入的是中文，请给出最常用的对应日语单词）。\n只输出一个JSON对象，不要任何其他文字，格式：\n{"word":"日语单词（汉字写法）","kana":"平假名读音","romaji":"罗马字读音","zh":"简洁的中文意思","pos":"词性，如 动词/名词/形容词","explain":"用简单易懂的中文解释用法、语感、与近义词的区别，2-3句","examples":[{"ja":"简单的日语例句","kana":"例句的平假名读音","zh":"中文翻译"}],"tip":"一句记忆小窍门，可为空字符串"}\n要求：给3个例句，句子用N5-N4水平的简单日语。';
+  try{
+    var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+    var j=await res.json();
+    if(!res.ok)throw new Error((j.error&&j.error.message)||res.status);
+    show(parse(j.content.map(function(c){return c.text||""}).join("")));
+  }catch(e){
+    $("out").innerHTML='<div class="msg err">查询失败：'+esc(e.message)+'</div>';
+  }
+  $("go").disabled=false;
+}
+$("go").onclick=lookup;
+$("q").addEventListener("keydown",function(e){if(e.key==="Enter")lookup()});
+
+load();renderList();
+try{apiKey=localStorage.getItem(AK)||"";$("key").value=apiKey}catch(e){}
+$("ks").onclick=function(){
+  apiKey=$("key").value.trim();
+  try{localStorage.setItem(AK,apiKey);$("kmsg").textContent="已保存。"}catch(e){$("kmsg").textContent="保存失败（浏览器禁止存储），本次打开期间仍可使用。"}
+};
+})();
+</script>
+</body>
+</html>
