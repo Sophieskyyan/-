@@ -155,12 +155,17 @@ async function lookup(){
   if(!apiKey){$("out").innerHTML='<div class="msg err">请先到“设置”里填入 API Key。</div>';return}
   $("go").disabled=true;
   $("out").innerHTML='<div class="msg">查询中…</div>';
-  var prompt='你是日语老师，学生是中文母语者。请解释这个词："'+q+'"（如果输入的是中文，请给出最常用的对应日语单词）。\n只输出一个JSON对象，不要任何其他文字，格式：\n{"word":"日语单词（汉字写法）","kana":"平假名读音","romaji":"罗马字读音","zh":"简洁的中文意思","pos":"词性，如 动词/名词/形容词","explain":"用简单易懂的中文解释用法、语感、与近义词的区别，2-3句","examples":[{"ja":"简单的日语例句","kana":"例句的平假名读音","zh":"中文翻译"}],"tip":"一句记忆小窍门，可为空字符串"}\n要求：给3个例句，句子用N5-N4水平的简单日语。';
+  var prompt='你是日语老师，学生是中文母语者。请解释这个词："'+q+'"（如果输入的是中文，请给出最常用的对应日语单词）。\n只输出一个JSON对象，不要任何其他文字，格式：\n{"word":"日语单词（汉字写法）","kana":"平假名读音","romaji":"罗马字读音","zh":"简洁的中文意思","pos":"词性，如 动词/名词/形容词","explain":"用简单易懂的中文解释用法、语感、与近义词的区别，2-3句","examples":[{"ja":"简单的日语例句","kana":"例句的平假名读音","zh":"中文翻译"}],"tip":"一句记忆小窍门，可为空字符串"}\n要求：必须是严格合法的JSON；所有字符串值内部不要出现英文双引号（需要引用时用「」），不要换行。给3个例句，句子用N5-N4水平的简单日语。';
   try{
-    var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
-    var j=await res.json();
-    if(!res.ok)throw new Error((j.error&&j.error.message)||res.status);
-    show(parse(j.content.map(function(c){return c.text||""}).join("")));
+    var d=null,last=null;
+    for(var n=0;n<3&&!d;n++){
+      var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:prompt}]})});
+      var j=await res.json();
+      if(!res.ok)throw new Error((j.error&&j.error.message)||res.status);
+      try{d=parse(j.content.map(function(c){return c.text||""}).join(""))}catch(pe){last=pe}
+    }
+    if(!d)throw last;
+    show(d);
   }catch(e){
     $("out").innerHTML='<div class="msg err">查询失败：'+esc(e.message)+'</div>';
   }
